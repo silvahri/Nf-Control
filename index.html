@@ -1,0 +1,1415 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NF Control · Subcontratação</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🌺</text></svg>">
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --rose-50: #fff0f5;
+    --rose-100: #ffe0ec;
+    --rose-200: #ffc2d9;
+    --rose-300: #ff9abf;
+    --rose-400: #ff6699;
+    --rose-500: #f73c72;
+    --rose-600: #d91a55;
+    --rose-700: #b01245;
+    --rose-800: #8a0f39;
+    --rose-900: #5e0926;
+    --blush: #fce7f0;
+    --petal: #f9d0e3;
+    --white: #fff;
+    --text-dark: #2d1520;
+    --text-mid: #6b3551;
+    --text-light: #a06080;
+    --border: rgba(247,60,114,0.15);
+    --shadow: 0 4px 24px rgba(180,20,80,0.10);
+    --shadow-lg: 0 12px 48px rgba(180,20,80,0.18);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--blush);
+    color: var(--text-dark);
+    min-height: 100vh;
+  }
+
+  /* Noise texture overlay */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E");
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* ── HEADER ── */
+  header {
+    background: linear-gradient(135deg, var(--rose-700) 0%, var(--rose-500) 60%, var(--rose-300) 100%);
+    padding: 28px 40px 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    box-shadow: var(--shadow-lg);
+    position: relative;
+    z-index: 10;
+  }
+  header::after {
+    content: '✿';
+    position: absolute;
+    right: 180px;
+    top: 8px;
+    font-size: 56px;
+    opacity: 0.12;
+    color: white;
+  }
+  .logo {
+    font-family: 'DM Serif Display', serif;
+    font-size: 28px;
+    color: white;
+    letter-spacing: -0.5px;
+  }
+  .logo span { font-style: italic; opacity: 0.75; }
+  .header-sub {
+    font-size: 12px;
+    color: rgba(255,255,255,0.7);
+    margin-top: 2px;
+    font-weight: 300;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+  }
+  .btn-new {
+    background: white;
+    color: var(--rose-600);
+    border: none;
+    padding: 11px 24px;
+    border-radius: 50px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .btn-new:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(0,0,0,0.2); }
+
+  /* ── LAYOUT ── */
+  .container { max-width: 1440px; margin: 0 auto; padding: 32px 32px; position: relative; z-index: 1; }
+
+  /* ── STATS BAR ── */
+  .stats-bar {
+    display: flex;
+    gap: 16px;
+    margin-bottom: 32px;
+    flex-wrap: wrap;
+  }
+  .stat-card {
+    background: white;
+    border-radius: 16px;
+    padding: 18px 24px;
+    flex: 1;
+    min-width: 150px;
+    box-shadow: var(--shadow);
+    border: 1px solid var(--border);
+    position: relative;
+    overflow: hidden;
+  }
+  .stat-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+    background: var(--gradient);
+  }
+  .stat-card.s1 { --gradient: linear-gradient(90deg, #f73c72, #ff9abf); }
+  .stat-card.s2 { --gradient: linear-gradient(90deg, #d91a55, #f73c72); }
+  .stat-card.s3 { --gradient: linear-gradient(90deg, #ff6699, #ffc2d9); }
+  .stat-card.s4 { --gradient: linear-gradient(90deg, #b01245, #d91a55); }
+  .stat-card.s5 { --gradient: linear-gradient(90deg, #5e0926, #b01245); }
+  .stat-num { font-size: 32px; font-weight: 600; color: var(--rose-600); line-height: 1; }
+  .stat-label { font-size: 11px; color: var(--text-light); text-transform: uppercase; letter-spacing: 1px; margin-top: 4px; }
+
+  /* ── FILTERS ── */
+  .filters {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 24px;
+    flex-wrap: wrap;
+    align-items: center;
+  }
+  .filter-btn {
+    padding: 8px 18px;
+    border-radius: 50px;
+    border: 1.5px solid var(--rose-200);
+    background: white;
+    color: var(--text-mid);
+    font-size: 13px;
+    font-family: 'DM Sans', sans-serif;
+    cursor: pointer;
+    transition: all 0.18s;
+    font-weight: 500;
+  }
+  .filter-btn.active, .filter-btn:hover {
+    background: var(--rose-500);
+    color: white;
+    border-color: var(--rose-500);
+  }
+  .search-box {
+    margin-left: auto;
+    padding: 9px 16px;
+    border: 1.5px solid var(--rose-200);
+    border-radius: 50px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px;
+    width: 220px;
+    outline: none;
+    background: white;
+    color: var(--text-dark);
+    transition: border-color 0.2s;
+  }
+  .search-box:focus { border-color: var(--rose-400); }
+
+  /* ── TABLE ── */
+  .table-wrap {
+    background: white;
+    border-radius: 20px;
+    box-shadow: var(--shadow);
+    border: 1px solid var(--border);
+    overflow: hidden;
+  }
+  table { width: 100%; border-collapse: collapse; }
+  thead { background: linear-gradient(90deg, var(--rose-700), var(--rose-500)); }
+  thead th {
+    color: white;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    padding: 14px 12px;
+    text-align: left;
+    white-space: nowrap;
+  }
+  tbody tr {
+    border-bottom: 1px solid var(--rose-50);
+    transition: background 0.15s;
+    cursor: pointer;
+  }
+  tbody tr:hover { background: var(--rose-50); }
+  tbody tr:last-child { border-bottom: none; }
+  td {
+    padding: 13px 12px;
+    font-size: 13px;
+    vertical-align: middle;
+  }
+  .nf-num { font-weight: 600; color: var(--rose-600); font-size: 14px; }
+  .fornecedor { color: var(--text-dark); font-weight: 500; max-width: 180px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .tipo-badge {
+    padding: 4px 10px;
+    border-radius: 50px;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  .tipo-ind { background: #ffe0ec; color: var(--rose-700); }
+  .tipo-nind { background: #f0e0ff; color: #7b21b0; }
+
+  /* STATUS PILLS */
+  .status-pill {
+    padding: 4px 10px;
+    border-radius: 50px;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    white-space: nowrap;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+  }
+  .status-pill::before { content: ''; width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+  .s-aguardando-espelho { background: #fff3e0; color: #e65100; }
+  .s-espelho-enviado { background: #e8f4fd; color: #1565c0; }
+  .s-espelho-validado { background: #e8fbe8; color: #2e7d32; }
+  .s-recebida-lancamento { background: #fce4ec; color: #880e4f; }
+  .s-aguardando-ajuste { background: #fff8e1; color: #f57f17; }
+  .s-aguardando-compras { background: #f3e5f5; color: #6a1b9a; }
+  .s-aguardando-migo-miro { background: #e3f2fd; color: #0d47a1; }
+  .s-migo-miro-ok { background: #e0f7fa; color: #006064; }
+  .s-nota-cobertura { background: #f9fbe7; color: #558b2f; }
+  .s-inspecao-fisica { background: #fbe9e7; color: #bf360c; }
+  .s-concluida { background: #e8f5e9; color: #1b5e20; }
+
+  .date-cell { font-size: 12px; color: var(--text-light); white-space: nowrap; }
+  .date-cell.filled { color: var(--text-dark); }
+  .date-na { color: #ccc; font-style: italic; }
+
+  .action-btn {
+    background: var(--rose-50);
+    border: 1px solid var(--rose-200);
+    color: var(--rose-600);
+    padding: 5px 12px;
+    border-radius: 8px;
+    font-size: 12px;
+    cursor: pointer;
+    font-family: 'DM Sans', sans-serif;
+    font-weight: 500;
+    transition: all 0.15s;
+  }
+  .action-btn:hover { background: var(--rose-500); color: white; border-color: var(--rose-500); }
+
+  /* ── MODAL ── */
+  .modal-overlay {
+    position: fixed; inset: 0;
+    background: rgba(90,10,40,0.45);
+    backdrop-filter: blur(6px);
+    z-index: 100;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.25s;
+  }
+  .modal-overlay.open { opacity: 1; pointer-events: all; }
+
+  .modal {
+    background: white;
+    border-radius: 24px;
+    max-width: 820px;
+    width: 100%;
+    max-height: 90vh;
+    overflow-y: auto;
+    box-shadow: 0 32px 80px rgba(140,10,60,0.25);
+    transform: translateY(20px);
+    transition: transform 0.25s;
+    position: relative;
+  }
+  .modal-overlay.open .modal { transform: translateY(0); }
+
+  .modal-header {
+    background: linear-gradient(135deg, var(--rose-700), var(--rose-400));
+    padding: 28px 32px 24px;
+    border-radius: 24px 24px 0 0;
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+  }
+  .modal-title { font-family: 'DM Serif Display', serif; font-size: 22px; color: white; }
+  .modal-subtitle { font-size: 13px; color: rgba(255,255,255,0.7); margin-top: 4px; }
+  .close-btn {
+    background: rgba(255,255,255,0.2);
+    border: none;
+    color: white;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    font-size: 18px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.15s;
+    flex-shrink: 0;
+  }
+  .close-btn:hover { background: rgba(255,255,255,0.35); }
+
+  .modal-body { padding: 32px; }
+
+  /* TIMELINE inside modal */
+  .pipeline {
+    display: flex;
+    gap: 0;
+    margin-bottom: 36px;
+    background: var(--blush);
+    border-radius: 16px;
+    padding: 20px;
+    overflow-x: auto;
+  }
+  .pipe-step {
+    flex: 1;
+    min-width: 110px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    position: relative;
+    text-align: center;
+  }
+  .pipe-step:not(:last-child)::after {
+    content: '';
+    position: absolute;
+    top: 18px;
+    right: -50%;
+    width: 100%;
+    height: 2px;
+    background: var(--rose-200);
+    z-index: 0;
+  }
+  .pipe-step.done:not(:last-child)::after { background: var(--rose-500); }
+  .pipe-dot {
+    width: 36px; height: 36px;
+    border-radius: 50%;
+    border: 2.5px solid var(--rose-200);
+    background: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 15px;
+    position: relative;
+    z-index: 1;
+    transition: all 0.2s;
+  }
+  .pipe-step.done .pipe-dot { border-color: var(--rose-500); background: var(--rose-500); color: white; }
+  .pipe-step.current .pipe-dot { border-color: var(--rose-500); background: white; color: var(--rose-500); box-shadow: 0 0 0 4px rgba(247,60,114,0.15); }
+  .pipe-label { font-size: 10px; margin-top: 8px; color: var(--text-light); font-weight: 500; text-transform: uppercase; letter-spacing: 0.5px; line-height: 1.3; }
+  .pipe-step.done .pipe-label { color: var(--rose-600); }
+  .pipe-step.current .pipe-label { color: var(--rose-700); font-weight: 700; }
+
+  /* FORM SECTIONS */
+  .form-section {
+    margin-bottom: 28px;
+    padding-bottom: 28px;
+    border-bottom: 1px solid var(--rose-50);
+  }
+  .form-section:last-child { border-bottom: none; }
+  .section-title {
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    color: var(--rose-500);
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .section-title::after { content: ''; flex: 1; height: 1px; background: var(--rose-100); }
+
+  .form-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 16px;
+  }
+  .form-group { display: flex; flex-direction: column; gap: 6px; }
+  .form-group.full { grid-column: 1 / -1; }
+  label {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text-light);
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+  }
+  input[type=text], input[type=date], input[type=number], select, textarea {
+    padding: 10px 14px;
+    border: 1.5px solid var(--rose-100);
+    border-radius: 10px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px;
+    color: var(--text-dark);
+    background: var(--rose-50);
+    outline: none;
+    transition: border-color 0.2s, background 0.2s;
+  }
+  input:focus, select:focus, textarea:focus {
+    border-color: var(--rose-400);
+    background: white;
+  }
+  textarea { resize: vertical; min-height: 80px; }
+  select { appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23a06080' d='M6 8L1 3h10z'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 12px center; padding-right: 32px; cursor: pointer; }
+
+  .checkbox-row { display: flex; align-items: center; gap: 10px; }
+  .checkbox-row input[type=checkbox] { width: 18px; height: 18px; accent-color: var(--rose-500); cursor: pointer; }
+  .checkbox-row label { font-size: 13px; text-transform: none; letter-spacing: 0; font-weight: 500; color: var(--text-dark); cursor: pointer; }
+
+  .form-actions {
+    display: flex;
+    gap: 12px;
+    justify-content: flex-end;
+    padding-top: 8px;
+  }
+  .btn-cancel {
+    padding: 11px 24px;
+    border: 1.5px solid var(--rose-200);
+    background: white;
+    color: var(--text-mid);
+    border-radius: 50px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .btn-cancel:hover { border-color: var(--rose-400); color: var(--rose-500); }
+  .btn-save {
+    padding: 11px 28px;
+    background: linear-gradient(135deg, var(--rose-600), var(--rose-400));
+    color: white;
+    border: none;
+    border-radius: 50px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    box-shadow: 0 4px 16px rgba(247,60,114,0.3);
+    transition: all 0.15s;
+  }
+  .btn-save:hover { transform: translateY(-1px); box-shadow: 0 8px 24px rgba(247,60,114,0.4); }
+
+  /* CONDITIONAL SECTIONS */
+  .cond-section {
+    display: none;
+    margin-top: 16px;
+    padding: 16px;
+    background: var(--blush);
+    border-radius: 12px;
+    border: 1px dashed var(--rose-300);
+  }
+  .cond-section.visible { display: block; }
+
+  /* ── DETAIL MODAL ── */
+  .detail-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin-bottom: 24px;
+  }
+  .detail-item { background: var(--blush); border-radius: 12px; padding: 14px 16px; }
+  .detail-label { font-size: 10px; text-transform: uppercase; letter-spacing: 1px; color: var(--text-light); font-weight: 600; margin-bottom: 4px; }
+  .detail-value { font-size: 14px; color: var(--text-dark); font-weight: 500; }
+  .detail-value.empty { color: var(--text-light); font-style: italic; font-size: 13px; }
+
+  /* EMPTY STATE */
+  .empty-state {
+    text-align: center;
+    padding: 60px 20px;
+    color: var(--text-light);
+  }
+  .empty-state-icon { font-size: 48px; margin-bottom: 16px; }
+  .empty-state-text { font-size: 15px; }
+
+  /* TOAST */
+  .toast {
+    position: fixed;
+    bottom: 32px;
+    right: 32px;
+    background: var(--rose-700);
+    color: white;
+    padding: 14px 24px;
+    border-radius: 12px;
+    font-size: 13px;
+    font-weight: 500;
+    box-shadow: var(--shadow-lg);
+    z-index: 999;
+    transform: translateY(80px);
+    opacity: 0;
+    transition: all 0.3s;
+  }
+  .toast.show { transform: translateY(0); opacity: 1; }
+
+  /* ── DECORATIONS ── */
+  .deco-kitty {
+    position: fixed;
+    pointer-events: none;
+    z-index: 0;
+    opacity: 0.13;
+    user-select: none;
+  }
+  .deco-float {
+    animation: floatY 4s ease-in-out infinite;
+  }
+  .deco-float2 {
+    animation: floatY 5s ease-in-out infinite reverse;
+  }
+  .deco-float3 {
+    animation: floatY 6s ease-in-out infinite 1s;
+  }
+  @keyframes floatY {
+    0%, 100% { transform: translateY(0px) rotate(-5deg); }
+    50% { transform: translateY(-12px) rotate(5deg); }
+  }
+  .bow {
+    display: inline-block;
+    font-size: 13px;
+    opacity: 0.5;
+    margin: 0 4px;
+    animation: bowBounce 2s ease-in-out infinite;
+  }
+  @keyframes bowBounce {
+    0%,100% { transform: scale(1); }
+    50% { transform: scale(1.2); }
+  }
+  .header-decos {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    overflow: hidden;
+  }
+  .star-deco {
+    position: absolute;
+    color: rgba(255,255,255,0.25);
+    font-size: 14px;
+    animation: twinkle 2s ease-in-out infinite;
+  }
+  @keyframes twinkle {
+    0%,100% { opacity: 0.15; transform: scale(1); }
+    50% { opacity: 0.5; transform: scale(1.3); }
+  }
+
+  /* Scrollbar */
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: var(--rose-50); }
+  ::-webkit-scrollbar-thumb { background: var(--rose-300); border-radius: 3px; }
+
+  @media (max-width: 768px) {
+    header { padding: 20px; }
+    .container { padding: 20px 16px; }
+    .logo { font-size: 20px; }
+    .detail-grid { grid-template-columns: 1fr; }
+    table { font-size: 12px; }
+    .modal-body { padding: 20px; }
+  }
+
+  /* ── LOGIN OVERLAY ── */
+  .login-overlay {
+    position: fixed; inset: 0;
+    background: linear-gradient(135deg, var(--rose-800), var(--rose-500));
+    z-index: 9999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+  }
+  .login-box {
+    background: white;
+    border-radius: 24px;
+    padding: 48px 40px;
+    max-width: 380px;
+    width: 100%;
+    text-align: center;
+    box-shadow: 0 32px 80px rgba(140,10,60,0.35);
+  }
+  .login-flower { font-size: 48px; margin-bottom: 16px; }
+  .login-title { font-family: 'DM Serif Display', serif; font-size: 26px; color: var(--rose-700); margin-bottom: 6px; }
+  .login-sub { font-size: 13px; color: var(--text-light); margin-bottom: 32px; }
+  .login-input {
+    width: 100%;
+    padding: 14px 18px;
+    border: 2px solid var(--rose-200);
+    border-radius: 12px;
+    font-size: 16px;
+    font-family: 'DM Sans', sans-serif;
+    color: var(--text-dark);
+    background: var(--rose-50);
+    outline: none;
+    text-align: center;
+    letter-spacing: 4px;
+    margin-bottom: 16px;
+    transition: border-color 0.2s;
+  }
+  .login-input:focus { border-color: var(--rose-400); background: white; }
+  .login-input.error { border-color: #e53935; animation: shake 0.3s; }
+  @keyframes shake { 0%,100%{transform:translateX(0)} 25%{transform:translateX(-8px)} 75%{transform:translateX(8px)} }
+  .btn-login {
+    width: 100%;
+    padding: 13px;
+    background: linear-gradient(135deg, var(--rose-600), var(--rose-400));
+    color: white;
+    border: none;
+    border-radius: 50px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    box-shadow: 0 4px 16px rgba(247,60,114,0.3);
+    transition: all 0.15s;
+    margin-bottom: 16px;
+  }
+  .btn-login:hover { transform: translateY(-1px); box-shadow: 0 8px 24px rgba(247,60,114,0.4); }
+  .btn-visitante {
+    width: 100%;
+    padding: 11px;
+    background: transparent;
+    color: var(--text-light);
+    border: 1.5px solid var(--rose-200);
+    border-radius: 50px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .btn-visitante:hover { border-color: var(--rose-400); color: var(--rose-500); }
+  .mode-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 14px;
+    border-radius: 50px;
+    font-size: 12px;
+    font-weight: 600;
+  }
+  .mode-editor { background: rgba(255,255,255,0.2); color: white; }
+  .mode-visitante { background: rgba(255,255,255,0.15); color: white; }
+  .hidden { display: none !important; }
+</style>
+</head>
+<body>
+
+<div class="login-overlay" id="loginOverlay">
+  <div class="login-box">
+    <div class="login-flower">🌸</div>
+    <div class="login-title">NF Control</div>
+    <div class="login-sub">Digite a senha para editar<br>ou entre como visitante para visualizar</div>
+    <input class="login-input" type="password" id="loginInput" placeholder="••••••••" onkeydown="if(event.key==='Enter')tryLogin()">
+    <button class="btn-login" onclick="tryLogin()">Entrar como Editor</button>
+    <button class="btn-visitante" onclick="enterAsVisitor()">👁 Entrar como Visitante</button>
+  </div>
+</div>
+
+<header>
+  <div>
+    <div class="logo"><span class="bow" style="font-size:16px;">🎀</span> NF <span>Control</span> <span class="bow" style="font-size:16px;">🎀</span></div>
+    <div class="header-sub">✦ Controle de Notas · Subcontratação ✦</div>
+  </div>
+  <div style="display:flex;align-items:center;gap:12px;">
+    <span class="mode-badge" id="modeBadge"></span>
+    <button class="btn-new" id="btnNova" onclick="openNewModal()">＋ Nova Nota</button>
+    <button onclick="logout()" style="background:rgba(255,255,255,0.15);border:none;color:white;padding:8px 16px;border-radius:50px;font-family:'DM Sans',sans-serif;font-size:13px;cursor:pointer;">Sair</button>
+  </div>
+</header>
+<!-- DECORAÇÕES -->
+<div class="header-decos">
+  <span class="star-deco" style="top:10px;left:120px;animation-delay:0s;">✦</span>
+  <span class="star-deco" style="top:20px;left:160px;animation-delay:0.3s;">✧</span>
+  <span class="star-deco" style="top:8px;left:200px;animation-delay:0.6s;">✦</span>
+  <span class="star-deco" style="top:18px;right:260px;animation-delay:0.9s;">✧</span>
+  <span class="star-deco" style="top:10px;right:220px;animation-delay:0.2s;">✦</span>
+  <span class="star-deco" style="top:22px;right:300px;animation-delay:0.5s;">✧</span>
+</div>
+
+<!-- Kitty canto inferior esquerdo -->
+<div class="deco-kitty deco-float" style="bottom:40px;left:20px;font-size:72px;">
+  🐱
+</div>
+<!-- Kitty canto inferior direito -->
+<div class="deco-kitty deco-float2" style="bottom:40px;right:20px;font-size:64px;">
+  🎀
+</div>
+<!-- Coração flutuante meio -->
+<div class="deco-kitty deco-float3" style="bottom:80px;right:110px;font-size:40px;">
+  💗
+</div>
+<!-- Estrelinhas canto superior direito -->
+<div class="deco-kitty" style="top:80px;right:30px;font-size:28px;opacity:0.08;animation:floatY 3s ease-in-out infinite;">
+  🌸✨🌸
+</div>
+
+<div id="loadingBar" style="display:none;height:3px;background:linear-gradient(90deg,#f73c72,#ff9abf,#f73c72);background-size:200%;animation:shimmer 1.2s infinite;position:sticky;top:0;z-index:50;"></div>
+<style>@keyframes shimmer{0%{background-position:200%}100%{background-position:-200%}}</style>
+
+<div class="container">
+
+  <!-- STATS -->
+  <div class="stats-bar" id="statsBar"></div>
+
+  <!-- FILTERS -->
+  <div class="filters">
+    <button class="filter-btn active" onclick="setFilter('todos', this)">Todas</button>
+    <button class="filter-btn" onclick="setFilter('industrializacao', this)">Industrialização</button>
+    <button class="filter-btn" onclick="setFilter('nao_industrializacao', this)">Não Industrialização</button>
+    <button class="filter-btn" onclick="setFilter('aguardando', this)">⚠ Pendentes</button>
+    <button class="filter-btn" onclick="setFilter('concluida', this)">✓ Concluídas</button>
+    <input class="search-box" type="text" placeholder="🔍 Buscar NF ou fornecedor…" oninput="setSearch(this.value)" id="searchBox">
+  </div>
+
+  <!-- TABLE -->
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Nº NF</th>
+          <th>Fornecedor</th>
+          <th>Tipo</th>
+          <th>Status Atual</th>
+          <th>Espelho Enviado</th>
+          <th>Espelho Validado</th>
+          <th>Recebida p/ Lançamento</th>
+          <th>Próxima Etapa</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody id="tableBody"></tbody>
+    </table>
+    <div class="empty-state" id="emptyState" style="display:none;">
+      <div class="empty-state-icon">🌸🎀🌸</div>
+      <div class="empty-state-text">Nenhuma nota encontrada.<br>Clique em <strong>Nova Nota</strong> para começar.</div>
+    </div>
+  </div>
+
+</div>
+
+<!-- MODAL NOVA/EDIÇÃO -->
+<div class="modal-overlay" id="modalOverlay">
+  <div class="modal">
+    <div class="modal-header">
+      <div>
+        <div class="modal-title" id="modalTitle">Nova Nota Fiscal</div>
+        <div class="modal-subtitle" id="modalSubtitle">Preencha os dados e acompanhe o fluxo</div>
+      </div>
+      <button class="close-btn" onclick="closeModal()">✕</button>
+    </div>
+    <div class="modal-body">
+
+      <!-- PIPELINE -->
+      <div class="pipeline" id="pipelineViz"></div>
+
+      <!-- FORM -->
+      <div class="form-section">
+        <div class="section-title">Identificação</div>
+        <div class="form-grid">
+          <div class="form-group">
+            <label>Número da NF</label>
+            <input type="text" id="f_nf" placeholder="Ex: 001234">
+          </div>
+          <div class="form-group">
+            <label>Fornecedor</label>
+            <input type="text" id="f_fornecedor" placeholder="Nome do fornecedor">
+          </div>
+          <div class="form-group">
+            <label>Tipo</label>
+            <select id="f_tipo">
+              <option value="">Selecione…</option>
+              <option value="industrializacao">Industrialização</option>
+              <option value="nao_industrializacao">Não Industrialização</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Valor da NF (R$)</label>
+            <input type="text" id="f_valor" placeholder="0,00">
+          </div>
+          <div class="form-group full">
+            <label>Observações Gerais</label>
+            <textarea id="f_obs" placeholder="Informações adicionais…"></textarea>
+          </div>
+        </div>
+      </div>
+
+      <!-- ETAPA 1: Espelho -->
+      <div class="form-section">
+        <div class="section-title">① Espelho da NF</div>
+        <div class="form-grid">
+          <div class="form-group">
+            <label>Data de Envio p/ Validação</label>
+            <input type="date" id="f_dt_espelho_enviado">
+          </div>
+          <div class="form-group">
+            <label>Data de Validação do Espelho</label>
+            <input type="date" id="f_dt_espelho_validado">
+          </div>
+        </div>
+      </div>
+
+      <!-- ETAPA 2: Recebimento -->
+      <div class="form-section">
+        <div class="section-title">② Recebimento p/ Lançamento</div>
+        <div class="form-grid">
+          <div class="form-group">
+            <label>Data de Recebimento</label>
+            <input type="date" id="f_dt_recebimento">
+          </div>
+          <div class="form-group">
+            <label>Status de Lançamento</label>
+            <select id="f_status_lancamento" onchange="onStatusLancamentoChange()">
+              <option value="">Aguardando recebimento</option>
+              <option value="recebida">Recebida – ok para lançar</option>
+              <option value="aguardando_ajuste">Aguardando Ajuste (erro pedido)</option>
+              <option value="aguardando_compras">Aguardando Correção de Compras</option>
+              <option value="lancada">Lançada</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Data do Lançamento</label>
+            <input type="date" id="f_dt_lancamento">
+          </div>
+        </div>
+        <div class="cond-section" id="sec_ajuste">
+          <div class="form-grid">
+            <div class="form-group">
+              <label>Descrição do Ajuste Necessário</label>
+              <input type="text" id="f_ajuste_desc" placeholder="Descreva o erro/ajuste">
+            </div>
+            <div class="form-group">
+              <label>Data de Envio p/ Correção</label>
+              <input type="date" id="f_dt_correcao_enviado">
+            </div>
+            <div class="form-group">
+              <label>Data de Retorno da Correção</label>
+              <input type="date" id="f_dt_correcao_retorno">
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ETAPA 3: MIGO/MIRO -->
+      <div class="form-section">
+        <div class="section-title">③ Confirmação Fiscal (MIGO / MIRO)</div>
+        <div class="form-grid">
+          <div class="form-group">
+            <div class="checkbox-row">
+              <input type="checkbox" id="f_migo" onchange="onMigoMiroChange()">
+              <label for="f_migo">MIGO lançado</label>
+            </div>
+          </div>
+          <div class="form-group">
+            <div class="checkbox-row">
+              <input type="checkbox" id="f_miro" onchange="onMigoMiroChange()">
+              <label for="f_miro">MIRO lançado</label>
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Data Confirmação MIGO/MIRO</label>
+            <input type="date" id="f_dt_migo_miro">
+          </div>
+        </div>
+      </div>
+
+      <!-- ETAPA 4: Via Final (condicional) -->
+      <div class="cond-section" id="sec_via_final">
+        <div class="section-title" style="color: var(--rose-700);">④ Encaminhamento Final</div>
+        <div class="form-grid">
+          <div class="form-group">
+            <label>Via Final</label>
+            <select id="f_via_final" onchange="onViaFinalChange()">
+              <option value="">Selecione a via…</option>
+              <option value="nota_cobertura">Solicitar Nota de Cobertura</option>
+              <option value="inspecao_fisica">Enviar para Inspeção Física</option>
+            </select>
+          </div>
+        </div>
+        <div class="cond-section" id="sec_cobertura">
+          <div class="form-grid">
+            <div class="form-group">
+              <label>Data Solicitação Nota de Cobertura</label>
+              <input type="date" id="f_dt_cobertura_solicit">
+            </div>
+            <div class="form-group">
+              <label>Data Recebimento Nota de Cobertura</label>
+              <input type="date" id="f_dt_cobertura_receb">
+            </div>
+            <div class="form-group">
+              <div class="checkbox-row">
+                <input type="checkbox" id="f_cobertura_ok">
+                <label for="f_cobertura_ok">Nota de Cobertura concluída</label>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="cond-section" id="sec_inspecao">
+          <div class="form-grid">
+            <div class="form-group">
+              <label>Data de Envio p/ Inspeção</label>
+              <input type="date" id="f_dt_inspecao_enviado">
+            </div>
+            <div class="form-group">
+              <label>Data de Conclusão da Inspeção</label>
+              <input type="date" id="f_dt_inspecao_concluida">
+            </div>
+            <div class="form-group">
+              <label>Resultado da Inspeção</label>
+              <select id="f_inspecao_resultado">
+                <option value="">Pendente</option>
+                <option value="aprovado">Aprovado</option>
+                <option value="reprovado">Reprovado</option>
+                <option value="aprovado_ressalva">Aprovado com Ressalva</option>
+              </select>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="form-section">
+        <div class="form-grid">
+          <div class="form-group">
+            <label>Status Final</label>
+            <select id="f_status_final">
+              <option value="em_andamento">Em Andamento</option>
+              <option value="concluida">Concluída</option>
+              <option value="cancelada">Cancelada</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <div class="form-actions">
+        <button class="btn-cancel" onclick="closeModal()">Cancelar</button>
+        <button class="btn-save" onclick="saveNota()">Salvar Nota</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- DETAIL MODAL -->
+<div class="modal-overlay" id="detailOverlay">
+  <div class="modal">
+    <div class="modal-header">
+      <div>
+        <div class="modal-title" id="detailTitle">Detalhes da NF</div>
+        <div class="modal-subtitle" id="detailSubtitle"></div>
+      </div>
+      <button class="close-btn" onclick="closeDetail()">✕</button>
+    </div>
+    <div class="modal-body" id="detailBody"></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ── SHEETDB CONFIG ────────────────────────────────────────────────────────
+const SHEETDB_URL = 'https://sheetdb.io/api/v1/93h631tkm0pv9';
+
+function showLoading(on) {
+  const el = document.getElementById('loadingBar');
+  if (el) el.style.display = on ? 'block' : 'none';
+}
+
+async function loadNotas() {
+  showLoading(true);
+  try {
+    const res = await fetch(SHEETDB_URL);
+    if (!res.ok) throw new Error('Erro ao carregar.');
+    const rows = await res.json();
+    notas = rows
+      .filter(r => r.id && r.dados)
+      .map(r => {
+        try { return typeof r.dados === 'string' ? JSON.parse(r.dados) : r.dados; }
+        catch(e) { return null; }
+      })
+      .filter(Boolean);
+  } catch(e) {
+    showToast('⚠ Erro ao carregar: ' + e.message);
+    notas = [];
+  }
+  showLoading(false);
+  renderTable();
+}
+
+async function save(n) {
+  const exists = !!editingId;
+  if (exists) {
+    const res = await fetch(SHEETDB_URL + '/id/' + encodeURIComponent(n.id), {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ data: { id: n.id, dados: JSON.stringify(n), updated_at: new Date().toISOString() } })
+    });
+    if (!res.ok) throw new Error('Erro ao atualizar.');
+    const idx = notas.findIndex(x => x.id === n.id);
+    if (idx >= 0) notas[idx] = n; else notas.unshift(n);
+  } else {
+    const res = await fetch(SHEETDB_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ data: { id: n.id, dados: JSON.stringify(n), updated_at: new Date().toISOString() } })
+    });
+    if (!res.ok) throw new Error('Erro ao criar.');
+    notas.unshift(n);
+  }
+}
+
+async function deleteNotaRemote(id) {
+  await fetch(SHEETDB_URL + '/id/' + encodeURIComponent(id), { method: 'DELETE' });
+  notas = notas.filter(x => x.id !== id);
+}
+
+// ── DATA ──────────────────────────────────────────────────────────────────
+let notas = [];
+let editingId = null;
+let currentFilter = 'todos';
+let currentSearch = '';
+
+// ── STATUS ────────────────────────────────────────────────────────────────
+function getStatusAtual(n) {
+  if (n.status_final === 'concluida') return { key: 's-concluida', label: 'Concluída' };
+  if (n.status_final === 'cancelada') return { key: 's-aguardando-espelho', label: 'Cancelada' };
+  if (n.via_final === 'nota_cobertura') {
+    if (n.cobertura_ok) return { key: 's-concluida', label: 'Cobertura OK' };
+    if (n.dt_cobertura_receb) return { key: 's-nota-cobertura', label: 'Cobertura Recebida' };
+    return { key: 's-nota-cobertura', label: 'Nota de Cobertura' };
+  }
+  if (n.via_final === 'inspecao_fisica') {
+    if (n.inspecao_resultado && n.inspecao_resultado !== '') return { key: 's-inspecao-fisica', label: 'Inspeção: ' + ({aprovado:'Aprovado',reprovado:'Reprovado','aprovado_ressalva':'Aprov. c/ Ressalva'}[n.inspecao_resultado]||'') };
+    return { key: 's-inspecao-fisica', label: 'Inspeção Física' };
+  }
+  if (n.migo && n.miro) return { key: 's-migo-miro-ok', label: 'MIGO/MIRO OK' };
+  if (n.migo || n.miro) return { key: 's-aguardando-migo-miro', label: 'Aguard. MIGO/MIRO' };
+  if (n.dt_lancamento) return { key: 's-aguardando-migo-miro', label: 'Lançada – Ag. Fiscal' };
+  if (n.status_lancamento === 'aguardando_compras') return { key: 's-aguardando-compras', label: 'Ag. Correção Compras' };
+  if (n.status_lancamento === 'aguardando_ajuste') return { key: 's-aguardando-ajuste', label: 'Aguardando Ajuste' };
+  if (n.dt_recebimento) return { key: 's-recebida-lancamento', label: 'Recebida p/ Lançamento' };
+  if (n.dt_espelho_validado) return { key: 's-espelho-validado', label: 'Espelho Validado' };
+  if (n.dt_espelho_enviado) return { key: 's-espelho-enviado', label: 'Espelho Enviado' };
+  return { key: 's-aguardando-espelho', label: 'Aguard. Espelho' };
+}
+
+function getProximaEtapa(n) {
+  const s = getStatusAtual(n);
+  const map = {
+    's-aguardando-espelho': 'Aguardar envio do espelho',
+    's-espelho-enviado': 'Aguardar validação',
+    's-espelho-validado': 'Aguardar nota p/ lançamento',
+    's-recebida-lancamento': 'Realizar lançamento',
+    's-aguardando-ajuste': 'Resolver ajuste de pedido',
+    's-aguardando-compras': 'Aguardar compras corrigir',
+    's-aguardando-migo-miro': 'Aguardar confirmação fiscal',
+    's-migo-miro-ok': 'Definir via final',
+    's-nota-cobertura': 'Solicitar nota de cobertura',
+    's-inspecao-fisica': 'Acompanhar inspeção',
+    's-concluida': '—',
+  };
+  return map[s.key] || '—';
+}
+
+// ── PIPELINE STEPS ────────────────────────────────────────────────────────
+function getPipelineSteps(n) {
+  const steps = [
+    { icon: '📄', label: 'Espelho\nEnviado', done: !!n.dt_espelho_enviado },
+    { icon: '✅', label: 'Espelho\nValidado', done: !!n.dt_espelho_validado },
+    { icon: '📥', label: 'Recebida\np/ Lançar', done: !!n.dt_recebimento },
+    { icon: '🚀', label: 'Lançada', done: !!n.dt_lancamento },
+    { icon: '🏦', label: 'MIGO/MIRO', done: !!(n.migo && n.miro) },
+    { icon: '🏁', label: 'Finalizado', done: n.status_final === 'concluida' },
+  ];
+  // find current
+  let currentIdx = steps.findIndex(s => !s.done);
+  return steps.map((s, i) => ({ ...s, current: i === currentIdx }));
+}
+
+// ── RENDER ────────────────────────────────────────────────────────────────
+function fmt(d) { if (!d) return '<span class="date-na">—</span>'; const [y,m,da] = d.split('-'); return `<span class="date-cell filled">${da}/${m}/${y}</span>`; }
+
+function renderTable() {
+  let data = [...notas];
+  if (currentFilter === 'industrializacao') data = data.filter(n => n.tipo === 'industrializacao');
+  else if (currentFilter === 'nao_industrializacao') data = data.filter(n => n.tipo === 'nao_industrializacao');
+  else if (currentFilter === 'aguardando') data = data.filter(n => n.status_final !== 'concluida' && n.status_final !== 'cancelada');
+  else if (currentFilter === 'concluida') data = data.filter(n => n.status_final === 'concluida');
+
+  if (currentSearch) {
+    const q = currentSearch.toLowerCase();
+    data = data.filter(n => (n.nf||'').toLowerCase().includes(q) || (n.fornecedor||'').toLowerCase().includes(q));
+  }
+
+  const tbody = document.getElementById('tableBody');
+  const empty = document.getElementById('emptyState');
+
+  if (data.length === 0) { tbody.innerHTML = ''; empty.style.display = ''; return; }
+  empty.style.display = 'none';
+
+  tbody.innerHTML = data.map(n => {
+    const st = getStatusAtual(n);
+    const prox = getProximaEtapa(n);
+    const tipo = n.tipo === 'industrializacao' ? '<span class="tipo-badge tipo-ind">Industr.</span>' : n.tipo === 'nao_industrializacao' ? '<span class="tipo-badge tipo-nind">Não Ind.</span>' : '—';
+    return `<tr onclick="openDetail('${n.id}')">
+      <td><span class="nf-num">${n.nf||'—'}</span></td>
+      <td><span class="fornecedor">${n.fornecedor||'—'}</span></td>
+      <td>${tipo}</td>
+      <td><span class="status-pill ${st.key}">${st.label}</span></td>
+      <td>${fmt(n.dt_espelho_enviado)}</td>
+      <td>${fmt(n.dt_espelho_validado)}</td>
+      <td>${fmt(n.dt_recebimento)}</td>
+      <td style="font-size:12px;color:var(--text-mid);">${prox}</td>
+      <td style='display:flex;gap:6px;'>${getActionBtn(n.id)}${getDeleteBtn(n.id)}</td>
+    </tr>`;
+  }).join('');
+
+  renderStats();
+}
+
+function renderStats() {
+  const total = notas.length;
+  const concluidas = notas.filter(n => n.status_final === 'concluida').length;
+  const pendentes = notas.filter(n => n.status_final !== 'concluida' && n.status_final !== 'cancelada').length;
+  const ajuste = notas.filter(n => n.status_lancamento === 'aguardando_ajuste' || n.status_lancamento === 'aguardando_compras').length;
+  const ind = notas.filter(n => n.tipo === 'industrializacao').length;
+
+  document.getElementById('statsBar').innerHTML = `
+    <div class="stat-card s1"><div class="stat-num">${total}</div><div class="stat-label">Total de Notas</div></div>
+    <div class="stat-card s2"><div class="stat-num">${pendentes}</div><div class="stat-label">Em Andamento</div></div>
+    <div class="stat-card s3"><div class="stat-num">${concluidas}</div><div class="stat-label">Concluídas</div></div>
+    <div class="stat-card s4"><div class="stat-num">${ajuste}</div><div class="stat-label">Aguard. Ajuste/Compras</div></div>
+    <div class="stat-card s5"><div class="stat-num">${ind}</div><div class="stat-label">Industrialização</div></div>
+  `;
+}
+
+// ── MODAL ─────────────────────────────────────────────────────────────────
+function openNewModal() {
+  if (!isEditor) return;
+  editingId = null;
+  clearForm();
+  document.getElementById('modalTitle').textContent = 'Nova Nota Fiscal';
+  document.getElementById('modalSubtitle').textContent = 'Preencha os dados e acompanhe o fluxo';
+  renderPipeline({});
+  document.getElementById('modalOverlay').classList.add('open');
+}
+
+function openEdit(id) {
+  if (!isEditor) return;
+  editingId = id;
+  const n = notas.find(x => x.id === id);
+  if (!n) return;
+  fillForm(n);
+  document.getElementById('modalTitle').textContent = `Editar NF ${n.nf||''}`;
+  document.getElementById('modalSubtitle').textContent = n.fornecedor || '';
+  renderPipeline(n);
+  document.getElementById('modalOverlay').classList.add('open');
+  onStatusLancamentoChange();
+  onMigoMiroChange();
+  onViaFinalChange();
+}
+
+function closeModal() { document.getElementById('modalOverlay').classList.remove('open'); }
+
+function clearForm() {
+  ['f_nf','f_fornecedor','f_valor','f_obs','f_dt_espelho_enviado','f_dt_espelho_validado',
+   'f_dt_recebimento','f_dt_lancamento','f_dt_migo_miro','f_ajuste_desc','f_dt_correcao_enviado',
+   'f_dt_correcao_retorno','f_dt_cobertura_solicit','f_dt_cobertura_receb','f_dt_inspecao_enviado',
+   'f_dt_inspecao_concluida'].forEach(id => { const el = document.getElementById(id); if(el) el.value = ''; });
+  document.getElementById('f_tipo').value = '';
+  document.getElementById('f_status_lancamento').value = '';
+  document.getElementById('f_via_final').value = '';
+  document.getElementById('f_status_final').value = 'em_andamento';
+  document.getElementById('f_inspecao_resultado').value = '';
+  document.getElementById('f_migo').checked = false;
+  document.getElementById('f_miro').checked = false;
+  document.getElementById('f_cobertura_ok').checked = false;
+  document.getElementById('sec_ajuste').classList.remove('visible');
+  document.getElementById('sec_via_final').classList.remove('visible');
+  document.getElementById('sec_cobertura').classList.remove('visible');
+  document.getElementById('sec_inspecao').classList.remove('visible');
+}
+
+function fillForm(n) {
+  clearForm();
+  const set = (id, v) => { const el = document.getElementById(id); if(el && v !== undefined) el.value = v || ''; };
+  set('f_nf', n.nf); set('f_fornecedor', n.fornecedor); set('f_valor', n.valor); set('f_obs', n.obs);
+  set('f_tipo', n.tipo); set('f_status_lancamento', n.status_lancamento); set('f_status_final', n.status_final);
+  set('f_dt_espelho_enviado', n.dt_espelho_enviado); set('f_dt_espelho_validado', n.dt_espelho_validado);
+  set('f_dt_recebimento', n.dt_recebimento); set('f_dt_lancamento', n.dt_lancamento);
+  set('f_dt_migo_miro', n.dt_migo_miro); set('f_ajuste_desc', n.ajuste_desc);
+  set('f_dt_correcao_enviado', n.dt_correcao_enviado); set('f_dt_correcao_retorno', n.dt_correcao_retorno);
+  set('f_via_final', n.via_final);
+  set('f_dt_cobertura_solicit', n.dt_cobertura_solicit); set('f_dt_cobertura_receb', n.dt_cobertura_receb);
+  set('f_dt_inspecao_enviado', n.dt_inspecao_enviado); set('f_dt_inspecao_concluida', n.dt_inspecao_concluida);
+  set('f_inspecao_resultado', n.inspecao_resultado);
+  document.getElementById('f_migo').checked = !!n.migo;
+  document.getElementById('f_miro').checked = !!n.miro;
+  document.getElementById('f_cobertura_ok').checked = !!n.cobertura_ok;
+}
+
+async function saveNota() {
+  if (!isEditor) { showToast("⚠ Apenas editores podem salvar!"); return; }
+  const nf = document.getElementById('f_nf').value.trim();
+  const forn = document.getElementById('f_fornecedor').value.trim();
+  if (!nf || !forn) { showToast('⚠ Número da NF e Fornecedor são obrigatórios!'); return; }
+
+  const n = {
+    id: editingId || 'nf_' + Date.now(),
+    nf, fornecedor: forn,
+    valor: document.getElementById('f_valor').value,
+    obs: document.getElementById('f_obs').value,
+    tipo: document.getElementById('f_tipo').value,
+    status_lancamento: document.getElementById('f_status_lancamento').value,
+    status_final: document.getElementById('f_status_final').value,
+    dt_espelho_enviado: document.getElementById('f_dt_espelho_enviado').value,
+    dt_espelho_validado: document.getElementById('f_dt_espelho_validado').value,
+    dt_recebimento: document.getElementById('f_dt_recebimento').value,
+    dt_lancamento: document.getElementById('f_dt_lancamento').value,
+    migo: document.getElementById('f_migo').checked,
+    miro: document.getElementById('f_miro').checked,
+    dt_migo_miro: document.getElementById('f_dt_migo_miro').value,
+    ajuste_desc: document.getElementById('f_ajuste_desc').value,
+    dt_correcao_enviado: document.getElementById('f_dt_correcao_enviado').value,
+    dt_correcao_retorno: document.getElementById('f_dt_correcao_retorno').value,
+    via_final: document.getElementById('f_via_final').value,
+    dt_cobertura_solicit: document.getElementById('f_dt_cobertura_solicit').value,
+    dt_cobertura_receb: document.getElementById('f_dt_cobertura_receb').value,
+    cobertura_ok: document.getElementById('f_cobertura_ok').checked,
+    dt_inspecao_enviado: document.getElementById('f_dt_inspecao_enviado').value,
+    dt_inspecao_concluida: document.getElementById('f_dt_inspecao_concluida').value,
+    inspecao_resultado: document.getElementById('f_inspecao_resultado').value,
+    updated_at: new Date().toISOString(),
+  };
+
+  try {
+    await save(n);
+    renderTable();
+    closeModal();
+    showToast('✅ Nota salva com sucesso!');
+  } catch(e) { showToast('⚠ Erro ao salvar!'); }
+}
+
+// ── CONDITIONAL ───────────────────────────────────────────────────────────
+function onStatusLancamentoChange() {
+  const v = document.getElementById('f_status_lancamento').value;
+  document.getElementById('sec_ajuste').classList.toggle('visible', v === 'aguardando_ajuste' || v === 'aguardando_compras');
+}
+function onMigoMiroChange() {
+  const migo = document.getElementById('f_migo').checked;
+  const miro = document.getElementById('f_miro').checked;
+  document.getElementById('sec_via_final').classList.toggle('visible', migo && miro);
+}
+function onViaFinalChange() {
+  const v = document.getElementById('f_via_final').value;
+  document.getElementById('sec_cobertura').classList.toggle('visible', v === 'nota_cobertura');
+  document.getElementById('sec_inspecao').classList.toggle('visible', v === 'inspecao_fisica');
+}
+
+// ── PIPELINE VIZ ──────────────────────────────────────────────────────────
+function renderPipeline(n) {
+  const steps = getPipelineSteps(n);
+  document.getElementById('pipelineViz').innerHTML = steps.map(s => `
+    <div class="pipe-step ${s.done?'done':''} ${s.current?'current':''}">
+      <div class="pipe-dot">${s.done ? '✓' : s.icon}</div>
+      <div class="pipe-label">${s.label.replace('\n','<br>')}</div>
+    </div>`).join('');
+}
+
+// ── DETAIL ────────────────────────────────────────────────────────────────
+function openDetail(id) {
+  const n = notas.find(x => x.id === id);
+  if (!n) return;
+  const st = getStatusAtual(n);
+  document.getElementById('detailTitle').textContent = `NF ${n.nf||'—'}`;
+  document.getElementById('detailSubtitle').textContent = n.fornecedor || '';
+
+  const fmtD = d => d ? d.split('-').reverse().join('/') : '—';
+  const tipoLabel = n.tipo === 'industrializacao' ? 'Industrialização' : n.tipo === 'nao_industrializacao' ? 'Não Industrialização' : '—';
+  const viaLabel = { nota_cobertura: 'Nota de Cobertura', inspecao_fisica: 'Inspeção Física' };
+
+  document.getElementById('detailBody').innerHTML = `
+    <div style="margin-bottom:20px;">
+      ${(() => { const steps = getPipelineSteps(n); return `<div class="pipeline">${steps.map(s=>`<div class="pipe-step ${s.done?'done':''} ${s.current?'current':''}"><div class="pipe-dot">${s.done?'✓':s.icon}</div><div class="pipe-label">${s.label.replace('\n','<br>')}</div></div>`).join('')}</div>`; })()}
+    </div>
+    <div class="detail-grid">
+      <div class="detail-item"><div class="detail-label">Status Atual</div><div class="detail-value"><span class="status-pill ${st.key}">${st.label}</span></div></div>
+      <div class="detail-item"><div class="detail-label">Tipo</div><div class="detail-value">${tipoLabel}</div></div>
+      <div class="detail-item"><div class="detail-label">Valor</div><div class="detail-value">${n.valor ? 'R$ ' + n.valor : '—'}</div></div>
+      <div class="detail-item"><div class="detail-label">Espelho Enviado</div><div class="detail-value ${!n.dt_espelho_enviado?'empty':''}">${fmtD(n.dt_espelho_enviado)}</div></div>
+      <div class="detail-item"><div class="detail-label">Espelho Validado</div><div class="detail-value ${!n.dt_espelho_validado?'empty':''}">${fmtD(n.dt_espelho_validado)}</div></div>
+      <div class="detail-item"><div class="detail-label">Recebida p/ Lançamento</div><div class="detail-value ${!n.dt_recebimento?'empty':''}">${fmtD(n.dt_recebimento)}</div></div>
+      <div class="detail-item"><div class="detail-label">Data Lançamento</div><div class="detail-value ${!n.dt_lancamento?'empty':''}">${fmtD(n.dt_lancamento)}</div></div>
+      <div class="detail-item"><div class="detail-label">MIGO / MIRO</div><div class="detail-value">${n.migo?'✅ MIGO':'❌ MIGO'} &nbsp; ${n.miro?'✅ MIRO':'❌ MIRO'}</div></div>
+      ${n.dt_migo_miro?`<div class="detail-item"><div class="detail-label">Data MIGO/MIRO</div><div class="detail-value">${fmtD(n.dt_migo_miro)}</div></div>`:''}
+      ${n.via_final?`<div class="detail-item"><div class="detail-label">Via Final</div><div class="detail-value">${viaLabel[n.via_final]||n.via_final}</div></div>`:''}
+      ${n.ajuste_desc?`<div class="detail-item" style="grid-column:1/-1"><div class="detail-label">Ajuste Necessário</div><div class="detail-value">${n.ajuste_desc}</div></div>`:''}
+      ${n.obs?`<div class="detail-item" style="grid-column:1/-1"><div class="detail-label">Observações</div><div class="detail-value">${n.obs}</div></div>`:''}
+    </div>
+    <div class="form-actions">
+      <button class="btn-cancel" onclick="closeDetail()">Fechar</button>
+      ${isEditor ? `<button class="btn-save" onclick="closeDetail();openEdit('${n.id}')">✏ Editar</button>` : ""}
+    </div>
+  `;
+  document.getElementById('detailOverlay').classList.add('open');
+}
+function closeDetail() { document.getElementById('detailOverlay').classList.remove('open'); }
+
+// ── FILTERS ───────────────────────────────────────────────────────────────
+function setFilter(f, btn) {
+  currentFilter = f;
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  renderTable();
+}
+function setSearch(v) { currentSearch = v; renderTable(); }
+
+// ── TOAST ─────────────────────────────────────────────────────────────────
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 3000);
+}
+
+// Close on outside click
+document.getElementById('modalOverlay').addEventListener('click', function(e) { if(e.target === this) closeModal(); });
+document.getElementById('detailOverlay').addEventListener('click', function(e) { if(e.target === this) closeDetail(); });
+
+// ── AUTH ─────────────────────────────────────────────────────────────────
+const SENHA = '14150430';
+let isEditor = false;
+
+function tryLogin() {
+  const val = document.getElementById('loginInput').value;
+  if (val === SENHA) {
+    isEditor = true;
+    document.getElementById('loginOverlay').style.display = 'none';
+    document.getElementById('modeBadge').textContent = '✏ Modo Editor';
+    document.getElementById('modeBadge').className = 'mode-badge mode-editor';
+    document.getElementById('btnNova').classList.remove('hidden');
+    loadNotas();
+  } else {
+    const inp = document.getElementById('loginInput');
+    inp.classList.add('error');
+    inp.value = '';
+    inp.placeholder = 'Senha incorreta!';
+    setTimeout(() => { inp.classList.remove('error'); inp.placeholder = '••••••••'; }, 1500);
+  }
+}
+
+function enterAsVisitor() {
+  isEditor = false;
+  document.getElementById('loginOverlay').style.display = 'none';
+  document.getElementById('modeBadge').textContent = '👁 Modo Visitante';
+  document.getElementById('modeBadge').className = 'mode-badge mode-visitante';
+  document.getElementById('btnNova').classList.add('hidden');
+  loadNotas();
+}
+
+function logout() {
+  isEditor = false;
+  document.getElementById('loginInput').value = '';
+  document.getElementById('loginInput').placeholder = '••••••••';
+  document.getElementById('loginOverlay').style.display = 'flex';
+}
+
+// Hide edit buttons for visitors
+function getActionBtn(id) {
+  if (!isEditor) return '';
+  return `<button class="action-btn" onclick="event.stopPropagation();openEdit('${id}')">✏ Editar</button>`;
+}
+function getDeleteBtn(id) {
+  if (!isEditor) return '';
+  return `<button class="action-btn" style="background:#fff0f0;border-color:#ffcccc;color:#cc0033;" onclick="event.stopPropagation();confirmDelete('${id}')">🗑</button>`;
+}
+
+async function confirmDelete(id) {
+  const n = notas.find(x => x.id === id);
+  if (!n) return;
+  if (!confirm('Excluir a NF ' + (n.nf || id) + '? Esta ação não pode ser desfeita.')) return;
+  showLoading(true);
+  try {
+    await deleteNotaRemote(id);
+    renderTable();
+    showToast('🗑 Nota excluída com sucesso!');
+  } catch(e) {
+    showToast('⚠ Erro ao excluir!');
+  }
+  showLoading(false);
+}
+
+// ── INIT ──────────────────────────────────────────────────────────────────
+// Show login overlay on start
+document.getElementById('btnNova').classList.add('hidden');
+</script>
+</body>
+</html>
